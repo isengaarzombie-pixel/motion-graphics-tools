@@ -75,3 +75,13 @@ def test_cli_help_lists_13_tools(capsys):
     out = capsys.readouterr().out
     for i in range(1, 14):
         assert f"Tool {i}" in out
+
+
+def test_satzzeichen_sind_keine_woerter():
+    words = [{"word": "Video.", "start": 1.0, "end": 1.6}, {"word": "...", "start": 2.0, "end": 2.4},
+             {"word": "Zuerst", "start": 2.6, "end": 3.1}]
+    out = words_from_alignment(make_alignment(words))
+    assert [w["word"] for w in out] == ["Video. ...", "Zuerst"]
+    assert out[0]["end"] == 1.6  # Pause bleibt als eine Lücke erhalten
+    assert [w["word"] for w in normalize_words({"words": [{"word": "„", "start": 0, "end": 0.1}] + words})] \
+        == ["„ Video. ...", "Zuerst"]

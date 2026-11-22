@@ -160,7 +160,28 @@ def words_from_alignment(alignment: dict) -> list[dict]:
         cur_end = e
     if cur:
         words.append({"word": cur, "start": round(cur_start, 4), "end": round(cur_end, 4)})
-    return words
+    return _attach_punctuation(words)
+
+
+def _attach_punctuation(words: list[dict]) -> list[dict]:
+    """Reine Satzzeichen-Tokens ("...", "–") sind keine Wörter: Text ans vorige Wort hängen, Zeiten nicht.
+
+    Sonst zerlegt z. B. "Video. ... Zuerst" eine lange Pause in zwei kurze Lücken, die ``pausen`` übersieht.
+    """
+    out: list[dict] = []
+    prefix = ""
+    for w in words:
+        if not any(ch.isalnum() for ch in w["word"]):
+            if out:
+                out[-1]["word"] += " " + w["word"]
+            else:
+                prefix += w["word"] + " "
+            continue
+        if prefix:
+            w = {**w, "word": prefix + w["word"]}
+            prefix = ""
+        out.append(w)
+    return out
 
 
 def load_words(path: str | os.PathLike) -> list[dict]:
@@ -197,4 +218,4 @@ def normalize_words(data: Any) -> list[dict]:
             continue
         out.append({"word": text, "start": float(w["start"]), "end": float(w["end"])})
     out.sort(key=lambda w: w["start"])
-    return out
+    return _attach_punctuation(out)
