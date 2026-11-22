@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "motion-graphics-tools"
+version = "1.0.0"
+description = "13 Hilfstools (CLI 'mgt') für die Audio-First-Produktion von Motion-Graphics-Videos per Vibe Coding"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+dependencies = [
+  "numpy>=1.24",
+  "Pillow>=10.0",
+  "requests>=2.31",
+]
+
+[project.optional-dependencies]
+freisteller = ["rembg[cpu]>=2.0.50"]
+dev = ["pytest>=7.4"]
+
+[project.scripts]
+mgt = "mgtools.cli:main"
+
+[tool.setuptools]
+packages = ["mgtools", "mgtools.data"]
+
+[tool.setuptools.package-data]
+"mgtools.data" = ["*.json"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
