@@ -1,3 +1,4 @@
+from pathlib import Path
 import builtins
 import sys
 
@@ -34,7 +35,7 @@ def test_process_folder_sort_trim_skip(tmp_path):
     _img(src / "char_bob.jpg", quality=True)
     _img(src / "icon_stern.png")
     _img(src / "hintergrund.png")
-    (src / "notiz.txt").write_text("x")
+    (src / "notiz.txt").write_text("x", encoding="utf-8")
     dst = tmp_path / "frei"
     res = cutout.process_folder(src, dst, fake_remover, sort=True, trim=True, padding=2)
     assert [r["status"] for r in res] == ["ok"] * 3
@@ -52,7 +53,7 @@ def test_process_folder_error_does_not_stop(tmp_path):
     _img(src / "a.png")
     (src / "kaputt.png").write_bytes(b"keinbild")
     res = cutout.process_folder(src, tmp_path / "o", fake_remover)
-    status = {r["datei"].split("/")[-1]: r["status"] for r in res}
+    status = {Path(r["datei"]).name: r["status"] for r in res}
     assert status["a.png"] == "ok" and status["kaputt.png"].startswith("fehler")
 
 
@@ -108,7 +109,7 @@ def test_license_forbidden_and_missing_license(tmp_path):
 def test_license_check(tmp_path):
     (tmp_path / "04_Assets" / "frei").mkdir(parents=True)
     (tmp_path / "04_Assets" / ".gitkeep").touch()
-    (tmp_path / "04_Assets" / "logo.svg").write_text("<svg/>")
+    (tmp_path / "04_Assets" / "logo.svg").write_text("<svg/>", encoding="utf-8")
     (tmp_path / "04_Assets" / "frei" / "foto.png").write_bytes(b"x")
     (tmp_path / "04_Assets" / "clip.mp4").write_bytes(b"x")
     lic = tmp_path / "lizenzen.md"

@@ -47,7 +47,7 @@ def test_cli_status_commit(project):
 
 
 def test_status_without_git(tmp_path):
-    (tmp_path / "STATUS.md").write_text("# STATUS\n")
+    (tmp_path / "STATUS.md").write_text("# STATUS\n", encoding="utf-8")
     assert cli(["status", "--projekt", str(tmp_path), "--commit", "x"]) == 2
 
 
@@ -72,7 +72,7 @@ def test_report(project):
     assert "800k" in text and "ElevenLabs TTS (Zeichen): 1500" in text and "Phase 0" in text
     assert "ffmpeg" in text
     # Learnings bleiben bei erneutem Erzeugen erhalten
-    (project / "REPORT.md").write_text(text.replace("- (bitte eintragen)", "- Easing-Preset X übernehmen"))
+    (project / "REPORT.md").write_text(text.replace("- (bitte eintragen)", "- Easing-Preset X übernehmen"), encoding="utf-8")
     assert "Easing-Preset X" in build_report(project)
 
 
@@ -113,7 +113,7 @@ def test_convert_no_partial_matches(dic):
 
 
 def test_user_dictionary(tmp_path):
-    (tmp_path / "a.json").write_text(json.dumps({"Kinetic Type": "Kinettick Taip"}))
+    (tmp_path / "a.json").write_text(json.dumps({"Kinetic Type": "Kinettick Taip"}), encoding="utf-8")
     d = load_dictionary([tmp_path / "a.json"])
     assert convert("Kinetic Type wirkt.", d)[0] == "Kinettick Taip wirkt."
 
@@ -122,9 +122,9 @@ def test_cli_aussprache_file_and_json(tmp_path, capsys):
     (tmp_path / "skript.txt").write_text("Das Feature ist live.", encoding="utf-8")
     assert cli(["aussprache", str(tmp_path / "skript.txt")]) == 0
     assert (tmp_path / "skript_sprecher.txt").read_text(encoding="utf-8") == "Das Fietscher ist live."
-    (tmp_path / "de.json").write_text(json.dumps({"titel": "Neues Update", "liste": ["AI Tools"]}))
+    (tmp_path / "de.json").write_text(json.dumps({"titel": "Neues Update", "liste": ["AI Tools"]}), encoding="utf-8")
     assert cli(["aussprache", str(tmp_path / "de.json"), "--aus", str(tmp_path / "o.json")]) == 0
-    assert json.loads((tmp_path / "o.json").read_text()) == {"titel": "Neues Apdäit", "liste": ["Äi Ai Tuhls"]}
+    assert json.loads((tmp_path / "o.json").read_text(encoding="utf-8")) == {"titel": "Neues Apdäit", "liste": ["Äi Ai Tuhls"]}
     assert cli(["aussprache", "--text", "Ein Prompt"]) == 0
 
 
@@ -161,7 +161,7 @@ def test_check_code(tmp_path):
     code = tmp_path / "code"
     (code / "src").mkdir(parents=True)
     (code / "node_modules" / "x").mkdir(parents=True)
-    (code / "node_modules" / "x" / "a.js").write_text("color: '#123456'")
+    (code / "node_modules" / "x" / "a.js").write_text("color: '#123456'", encoding="utf-8")
     (code / "src" / "Scene.tsx").write_text(
         "const bg = '#0F172A';\n"
         "const accent = \"#22d3ee\";\n"
@@ -172,7 +172,7 @@ def test_check_code(tmp_path):
         "const white = '#fff'; const near = '#0F172B';\n"
         "<div style={{color: 'orange'}} />\n"
         "const url = 'page#section'; const id = '#main-title';\n", encoding="utf-8")
-    (code / "src" / "style.css").write_text("h1 { font-family: 'Space Grotesk', sans-serif; color: hsl(0, 0%, 100%); }\n")
+    (code / "src" / "style.css").write_text("h1 { font-family: 'Space Grotesk', sans-serif; color: hsl(0, 0%, 100%); }\n", encoding="utf-8")
     b = parse_brand(tmp_path / "brand.md")
     f = check_code(code, b)
     got = {(x["zeile"], x["wert"]) for x in f}
@@ -195,9 +195,9 @@ def test_cli_brand(tmp_path, capsys):
     (tmp_path / "02_Brand").mkdir()
     (tmp_path / "02_Brand" / "brand.md").write_text(BRAND, encoding="utf-8")
     (tmp_path / "05_Code").mkdir()
-    (tmp_path / "05_Code" / "a.css").write_text("a { color: #22D3EE; }")
+    (tmp_path / "05_Code" / "a.css").write_text("a { color: #22D3EE; }", encoding="utf-8")
     assert cli(["brand", "--brand", str(tmp_path / "02_Brand/brand.md"), "--code", str(tmp_path / "05_Code")]) == 0
-    (tmp_path / "05_Code" / "b.css").write_text("a { color: #ff0000; }")
+    (tmp_path / "05_Code" / "b.css").write_text("a { color: #ff0000; }", encoding="utf-8")
     assert cli(["brand", "--brand", str(tmp_path / "02_Brand/brand.md"), "--code", str(tmp_path / "05_Code"),
                 "--json"]) == 1
     assert '"#ff0000"' in capsys.readouterr().out

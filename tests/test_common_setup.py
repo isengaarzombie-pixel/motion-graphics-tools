@@ -48,11 +48,11 @@ def test_create_project_idempotent(tmp_path):
         assert (root / f).is_dir()
     for f in ["STATUS.md", "lizenzen.md", ".gitignore", ".env.example", "05_Code/i18n/de.json"]:
         assert (root / f).exists()
-    assert ".env" in (root / ".gitignore").read_text()
+    assert ".env" in (root / ".gitignore").read_text(encoding="utf-8")
     assert (root / ".git").exists()
     (root / "STATUS.md").write_text("eigener Inhalt", encoding="utf-8")
     assert create_project(root) == []
-    assert (root / "STATUS.md").read_text() == "eigener Inhalt"
+    assert (root / "STATUS.md").read_text(encoding="utf-8") == "eigener Inhalt"
     assert "STATUS.md" in created
 
 

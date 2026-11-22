@@ -52,12 +52,12 @@ def test_build_scenes_bad_phrase():
 
 
 def test_cli_timetable(tmp_path):
-    (tmp_path / "timing.json").write_text(json.dumps({"words": WORDS}))
+    (tmp_path / "timing.json").write_text(json.dumps({"words": WORDS}), encoding="utf-8")
     assert cli(["timetable", str(tmp_path / "timing.json"), "--fps", "60", "--aus",
                 str(tmp_path / "scenes.json"), "--md", str(tmp_path / "tt.md")]) == 0
-    d = json.loads((tmp_path / "scenes.json").read_text())
+    d = json.loads((tmp_path / "scenes.json").read_text(encoding="utf-8"))
     assert d["fps"] == 60 and len(d["szenen"]) == 3
-    assert (tmp_path / "tt.md").read_text().startswith("# Timetable")
+    assert (tmp_path / "tt.md").read_text(encoding="utf-8").startswith("# Timetable")
 
 
 @pytest.mark.parametrize("kind", sorted(set(SOUNDS)))

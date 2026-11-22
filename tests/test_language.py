@@ -40,10 +40,10 @@ def test_cli_vorlage_und_pruefen(tmp_path):
     (i18n / "de.json").write_text(json.dumps(DE), encoding="utf-8")
     assert cli(["sprache", "vorlage", "--projekt", str(tmp_path)]) == 0
     assert cli(["sprache", "pruefen", "--projekt", str(tmp_path)]) == 1
-    en = json.loads((i18n / "en.json").read_text())
+    en = json.loads((i18n / "en.json").read_text(encoding="utf-8"))
     en.update({"titel": "Motion graphics with code", "liste": ["One", "Two"]})
     en["szenen"] = {"intro": {"headline": "Hello {name}!", "sub": "Let's go"}, "outro": "Thanks for watching"}
-    (i18n / "en.json").write_text(json.dumps(en))
+    (i18n / "en.json").write_text(json.dumps(en), encoding="utf-8")
     assert cli(["sprache", "pruefen", "--projekt", str(tmp_path)]) == 0
 
 
@@ -130,7 +130,7 @@ def test_synthesize_single_and_multi(tmp_path, mp3_b64):
                    "v", "k", "eleven_multilingual_v2", "en", project=tmp_path, session=s)
     assert [w["word"] for w in t["words"]] == ["Hello", "there", "friend."]
     assert (tmp_path / "a" / "voice_raw.mp3").stat().st_size > 1000
-    log = json.loads((tmp_path / "03_Audio" / "credits_log.json").read_text())
+    log = json.loads((tmp_path / "03_Audio" / "credits_log.json").read_text(encoding="utf-8"))
     assert log[0]["menge"] == len("Hello there friend.")
 
     s2 = FakeSession(mp3_b64)
@@ -147,30 +147,30 @@ def test_synthesize_single_and_multi(tmp_path, mp3_b64):
 
 def test_cli_tts_without_key(tmp_path, monkeypatch, capsys):
     monkeypatch.delenv("ELEVENLABS_API_KEY", raising=False)
-    (tmp_path / "t.txt").write_text("Hi")
+    (tmp_path / "t.txt").write_text("Hi", encoding="utf-8")
     assert cli(["sprache", "tts", "--text", str(tmp_path / "t.txt"), "--projekt", str(tmp_path)]) == 2
     assert "ELEVENLABS_API_KEY" in capsys.readouterr().err
 
 
 @needs_ffmpeg
 def test_cli_pipeline_mocked(tmp_path, monkeypatch, mp3_b64):
-    (tmp_path / ".env").write_text("ELEVENLABS_API_KEY=test\nELEVENLABS_VOICE_ID_EN=voiceEN\n")
+    (tmp_path / ".env").write_text("ELEVENLABS_API_KEY=test\nELEVENLABS_VOICE_ID_EN=voiceEN\n", encoding="utf-8")
     monkeypatch.delenv("ELEVENLABS_API_KEY", raising=False)
     monkeypatch.delenv("ELEVENLABS_VOICE_ID_EN", raising=False)
     fake = FakeSession(mp3_b64)
     import requests
     monkeypatch.setattr(requests, "post", fake.post)
-    (tmp_path / "en.txt").write_text("Welcome back friends.")
+    (tmp_path / "en.txt").write_text("Welcome back friends.", encoding="utf-8")
     assert cli(["sprache", "pipeline", "--text", str(tmp_path / "en.txt"), "--projekt", str(tmp_path)]) == 0
     assert "voiceEN" in fake.calls[0]["url"]
     d = tmp_path / "03_Audio" / "en"
     for f in ["voice_raw.mp3", "timing_raw.json", "voice.mp3", "timing.json", "schnittliste.json", "timetable.md"]:
         assert (d / f).exists(), f
-    scenes = json.loads((tmp_path / "05_Code" / "scenes_en.json").read_text())
+    scenes = json.loads((tmp_path / "05_Code" / "scenes_en.json").read_text(encoding="utf-8"))
     assert scenes["szenen"][0]["words"][0]["word"] == "Welcome"
 
 
 def test_cli_render_per_language(tmp_path):
     cmd = "echo {lang} {timing} > " + str(tmp_path) + "/{lang}.txt"
     assert cli(["sprache", "render", "--sprachen", "de", "en", "--befehl", cmd]) == 0
-    assert (tmp_path / "en.txt").read_text().strip() == "en 03_Audio/en/timing.json"
+    assert (tmp_path / "en.txt").read_text(encoding="utf-8").strip() == "en 03_Audio/en/timing.json"

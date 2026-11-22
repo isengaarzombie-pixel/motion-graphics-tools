@@ -44,7 +44,7 @@ def test_build_sheet_grid(tmp_path):
 def test_cli_storyboard_from_video(quiet_video, tmp_path):
     scenes = {"fps": 30, "szenen": [{"id": "a", "start": 0, "end": 2, "text": "Eins"},
                                     {"id": "b", "start": 2, "end": 4, "text": "Zwei"}]}
-    (tmp_path / "scenes.json").write_text(json.dumps(scenes))
+    (tmp_path / "scenes.json").write_text(json.dumps(scenes), encoding="utf-8")
     out = tmp_path / "sb.png"
     assert cli(["storyboard", "--video", str(quiet_video), "--szenen", str(tmp_path / "scenes.json"),
                 "--frames-ordner", str(tmp_path / "frames"), "--aus", str(out), "--safe-area", "16:9"]) == 0
@@ -138,6 +138,6 @@ def test_cli_formate_umwandeln(quiet_video, tmp_path):
 def test_render_loop(tmp_path):
     cmds = render_loop("echo {name} {breite}x{hoehe} > " + str(tmp_path) + "/{name}.txt",
                        [{"name": "9x16", "breite": 1080, "hoehe": 1920}])
-    assert (tmp_path / "9x16.txt").read_text().strip() == "9x16 1080x1920"
+    assert (tmp_path / "9x16.txt").read_text(encoding="utf-8").strip() == "9x16 1080x1920"
     assert cli(["formate", "render", "--formate", "16:9", "9:16", "--probe", "--befehl", "npx x {name}"]) == 0
     assert cli(["formate", "render", "--befehl", "exit 3"]) == 2

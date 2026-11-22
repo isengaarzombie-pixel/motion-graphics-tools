@@ -66,10 +66,10 @@ def test_cli_pausen_with_alignment(speech, tmp_path, capsys):
     assert rc == 0
     data, sr = read_wav(out_audio)
     assert abs(len(data) / sr - (5.0 - 0.95 - 0.35 - 0.55)) < 0.02
-    new = json.loads((tmp_path / "timing.json").read_text())["words"]
+    new = json.loads((tmp_path / "timing.json").read_text(encoding="utf-8"))["words"]
     assert [w["word"] for w in new] == ["Hallo", "Welt.", "Das", "funktioniert!"]
     assert abs(new[2]["start"] - 1.65) < 0.01
-    cuts = json.loads((tmp_path / "cuts.json").read_text())
+    cuts = json.loads((tmp_path / "cuts.json").read_text(encoding="utf-8"))
     assert cuts["methode"] == "wort-timestamps" and len(cuts["schnitte"]) == 3
     assert "Stichprobe" in capsys.readouterr().out
 
@@ -86,11 +86,11 @@ def test_cli_pausen_mp3_and_silence_mode(speech, tmp_path):
 
 def test_cli_nur_timing(speech, tmp_path):
     _, words, _ = speech
-    (tmp_path / "t.json").write_text(json.dumps({"words": words}))
-    (tmp_path / "c.json").write_text(json.dumps({"schnitte": [{"start": 1.525, "ende": 2.475}]}))
+    (tmp_path / "t.json").write_text(json.dumps({"words": words}), encoding="utf-8")
+    (tmp_path / "c.json").write_text(json.dumps({"schnitte": [{"start": 1.525, "ende": 2.475}]}), encoding="utf-8")
     assert cli(["pausen", "--nur-timing", "--timing", str(tmp_path / "t.json"), "--schnittliste-ein",
                 str(tmp_path / "c.json"), "--timing-aus", str(tmp_path / "o.json")]) == 0
-    new = json.loads((tmp_path / "o.json").read_text())["words"]
+    new = json.loads((tmp_path / "o.json").read_text(encoding="utf-8"))["words"]
     assert abs(new[2]["start"] - 1.65) < 1e-6
 
 

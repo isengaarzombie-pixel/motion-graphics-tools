@@ -86,7 +86,8 @@ def git_commit(root: Path, message: str) -> str:
     if not (root / ".git").exists():
         raise ToolError("Kein Git-Repo im Projektordner. Zuerst: mgt setup --git")
     subprocess.run(["git", "add", "-A"], cwd=root, check=True)
-    proc = subprocess.run(["git", "commit", "-q", "-m", message], cwd=root, capture_output=True, text=True)
+    proc = subprocess.run(["git", "commit", "-q", "-m", message], cwd=root, capture_output=True, text=True,
+                          encoding="utf-8", errors="replace")
     if proc.returncode != 0:
         msg = (proc.stdout + proc.stderr).strip()
         if "nothing to commit" in msg or "nichts zu committen" in msg:
@@ -115,7 +116,7 @@ def git_log(root: Path) -> list[dict]:
     if not shutil.which("git") or not (root / ".git").exists():
         return []
     proc = subprocess.run(["git", "log", "--reverse", "--format=%H%x09%aI%x09%s"], cwd=root,
-                          capture_output=True, text=True)
+                          capture_output=True, text=True, encoding="utf-8", errors="replace")
     out = []
     for line in proc.stdout.splitlines():
         parts = line.split("\t", 2)
@@ -181,7 +182,7 @@ def build_report(root: Path, tokens: str | None = None, costs: str | None = None
     old_learnings = ""
     rp = root / "REPORT.md"
     if rp.exists():
-        m = re.search(r"## Learnings.*", rp.read_text(encoding="utf-8"), re.S)
+        m = re.search(r"## Learnings.*", rp.read_text(encoding="utf-8", errors="replace"), re.S)
         old_learnings = m.group(0).strip() if m else ""
 
     commits = git_log(root)
