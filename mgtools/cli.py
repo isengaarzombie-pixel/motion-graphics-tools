@@ -27,10 +27,10 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def _safe_console() -> None:
-    """Windows-Konsolen (cp1252) sollen bei Sonderzeichen nicht abstürzen."""
+    """Ausgabe immer als UTF-8: Windows-Pipes (cp1252) liefern LLMs sonst kaputte Umlaute."""
     for stream in (sys.stdout, sys.stderr):
         try:
-            stream.reconfigure(errors="replace")
+            stream.reconfigure(encoding="utf-8", errors="replace")
         except (AttributeError, ValueError):
             pass
 

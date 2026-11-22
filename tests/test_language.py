@@ -174,3 +174,12 @@ def test_cli_render_per_language(tmp_path):
     cmd = "echo {lang} {timing} > " + str(tmp_path) + "/{lang}.txt"
     assert cli(["sprache", "render", "--sprachen", "de", "en", "--befehl", cmd]) == 0
     assert (tmp_path / "en.txt").read_text(encoding="utf-8").strip() == "en 03_Audio/en/timing.json"
+
+
+def test_tts_key_id_statt_key():
+    class S:
+        def post(self, *a, **k):
+            return FakeResp(400, text='{"detail":{"code":"invalid_api_key","status":"api_key_id_used_as_api_key"}}')
+
+    with pytest.raises(ToolError, match="Key-ID"):
+        language.tts_request("Hi", "v", "k", "m", session=S())

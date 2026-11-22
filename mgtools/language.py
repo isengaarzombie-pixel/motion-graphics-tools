@@ -147,8 +147,12 @@ def tts_request(text: str, voice_id: str, api_key: str, model: str, language: st
             delay *= 2
             continue
         detail = resp.text[:500]
-        if resp.status_code == 401:
-            raise ToolError("ElevenLabs lehnt den API-Key ab (401). ELEVENLABS_API_KEY in .env prüfen.")
+        if "api_key_id_used_as_api_key" in detail:
+            raise ToolError("In ELEVENLABS_API_KEY steht die Key-ID, nicht der API-Key. Den eigentlichen Key "
+                            "(beginnt mit 'sk_', wird nur beim Erstellen angezeigt) in .env eintragen.")
+        if resp.status_code == 401 or "invalid_api_key" in detail:
+            raise ToolError(f"ElevenLabs lehnt den API-Key ab ({resp.status_code}). "
+                            "ELEVENLABS_API_KEY in .env prüfen.")
         raise ToolError(f"ElevenLabs-Fehler {resp.status_code}: {detail}")
     raise ToolError("ElevenLabs nicht erreichbar.")
 
