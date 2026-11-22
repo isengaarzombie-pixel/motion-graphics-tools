@@ -1,6 +1,6 @@
 # Hinweise für KI-Agenten (Claude Code, Codex, Gemini CLI …)
 
-Dieses Repo stellt die Kommandozeile `mgt` mit 13 Hilfstools für Motion-Graphics-Projekte bereit.
+Dieses Repo stellt die Kommandozeile `mgt` mit 14 Hilfstools für Motion-Graphics-Projekte bereit.
 Die vollständige Anleitung steht in `README.md`, Abschnitt **„Anleitung für LLMs“**.
 
 Kurzfassung:
@@ -10,6 +10,7 @@ Kurzfassung:
 - Exit-Codes: 0 ok · 1 Prüfung fand Probleme (beheben, erneut prüfen) · 2 Fehler (Meldung nach `FEHLER:` befolgen).
 - API-Keys nur in `.env`, nie committen oder ausgeben.
 - Übersetzungen macht der Agent selbst: `mgt sprache vorlage` → TODOs ersetzen → `mgt sprache pruefen`.
+- Subagent-/Fremdmodell-Ergebnisse nie ungeprüft übernehmen: `mgt pruefe <datei>`; delegieren mit `mgt delegiere`.
 - Nach jedem Arbeitsschritt: `mgt status --erledigt "…" --naechster "…" --commit "Phase X: …"`.
 
 Am Code dieses Repos arbeiten: `pip install -e ".[dev]"` und `pytest` (braucht FFmpeg). Neue Tools als Modul in

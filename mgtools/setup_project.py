@@ -22,6 +22,10 @@ __pycache__/
 ENV_EXAMPLE = """# Kopiere diese Datei nach .env und trage deine Schlüssel ein. .env wird NIE committet.
 ELEVENLABS_API_KEY=
 ELEVENLABS_VOICE_ID=
+# Tool 14 (mgt delegiere): günstige Fremdmodelle über OpenRouter
+OPENROUTER_API_KEY=
+# Modelle in Reihenfolge günstig -> stark, kommagetrennt (OpenRouter-IDs)
+MGT_MODELLE=
 """
 
 STATUS_TEMPLATE = """# STATUS

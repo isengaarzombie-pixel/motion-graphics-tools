@@ -1,6 +1,6 @@
 # Motion Graphics Tools (`mgt`)
 
-13 Hilfstools für die **Audio-First-Produktion von Motion-Graphics-Videos per Vibe Coding**.
+14 Hilfstools für die **Audio-First-Produktion von Motion-Graphics-Videos per Vibe Coding**.
 Sie nehmen einem LLM (Claude Code, Codex, Gemini CLI …) die Routinearbeit ab: Statt jedes Mal Skripte neu zu
 schreiben, ruft das LLM einen fertigen, getesteten Befehl auf. Das spart Tokens und macht Ergebnisse reproduzierbar.
 
@@ -22,6 +22,7 @@ Alle Tools stecken in **einer** Kommandozeile: `mgt <befehl>`. Die Ordnernamen f
 | 11 | `mgt brand` | 1.2 + 7.1 | Farben und Schriften im Code gegen `02_Brand/brand.md` prüfen |
 | 12 | `mgt formate` | 6.3 | 16:9 ↔ 9:16 (auch 1:1, 4:5): FFmpeg-Reframing oder Render-Schleife pro Format |
 | 13 | `mgt sprache` | 7.4 | `de.json` → `en.json`-Vorlage + Prüfung, englisches Voiceover über ElevenLabs mit Timestamps, Render pro Sprache |
+| 14 | `mgt pruefe` / `mgt delegiere` / `mgt modelle` | global (Token-Ökonomie) | Ergebnisse von Subagents/Fremdmodellen automatisch prüfen; Aufgaben an günstige Modelle (OpenRouter) delegieren mit Korrektur-Runden und Eskalation; Statistik, welches Modell welche Aufgabenart schafft |
 
 ---
 
@@ -60,7 +61,10 @@ Diese Regeln gelten, wenn du als LLM mit diesem Repo arbeitest:
    Nach jedem fertigen Schritt: `mgt status … --commit "Phase X: …"`.
 6. **Übersetzen machst du selbst.** `mgt sprache vorlage` legt `en.json` mit `TODO: <deutscher Text>` an. Ersetze jedes
    TODO durch die Übersetzung und kontrolliere mit `mgt sprache pruefen` (Platzhalter wie `{name}` müssen erhalten bleiben).
-7. **Prüf-Tools nicht übergehen:** Bei Exit-Code `1` die gemeldeten Stellen korrigieren und erneut prüfen, statt weiterzumachen.
+7. **Routinearbeit delegieren, aber nie ungeprüft übernehmen:** Ergebnisse von Subagents mit `mgt pruefe` kontrollieren,
+   klar prüfbare Aufgaben (SVG-Icons, JSON, Übersetzungen mit Schema) mit `mgt delegiere` an günstige Modelle geben.
+   Exit 1 bei `delegiere` heißt: selbst lösen (Eskalation).
+8. **Prüf-Tools nicht übergehen:** Bei Exit-Code `1` die gemeldeten Stellen korrigieren und erneut prüfen, statt weiterzumachen.
 
 ### Typischer Ablauf als Befehlsfolge
 
@@ -230,13 +234,45 @@ mgt sprache render --sprachen de en --arbeitsordner 05_Code \
 * Verbrauchte Zeichen landen in `03_Audio/credits_log.json` (für `mgt report`).
 * Platzhalter im Render-Befehl: `{lang}`, `{timing}`, `{szenen}`, `{audio}`.
 
+### 14 · `mgt pruefe`, `mgt delegiere`, `mgt modelle`
+Hält die Token-Ökonomie-Regel des Workflows ein: Routinearbeit geht an Subagents oder günstige Modelle, aber nur
+mit **automatischer Prüfung**, bevor das Ergebnis übernommen wird.
+
+```bash
+# Ergebnis eines Subagents (z. B. Claude Haiku) prüfen und fürs Modell-Log festhalten
+mgt pruefe 04_Assets/icon_stern.svg --brand 02_Brand/brand.md --modell claude-haiku --aufgabenart svg-icon
+mgt pruefe 05_Code/i18n/en.json --schema 05_Code/i18n/schema.json
+mgt pruefe 05_Code/src/Szene1.tsx --befehl "npx tsc --noEmit"
+
+# Aufgabe an günstige Modelle geben: prüfen, mit Fehlermeldung korrigieren lassen, sonst nächstes Modell
+mgt delegiere --aufgabe "Flaches SVG-Icon eines Mikrofons, 24x24, nur Brand-Farben" \
+    --aus 04_Assets/icon_mikro.svg --brand 02_Brand/brand.md --aufgabenart svg-icon \
+    --modelle deepseek/deepseek-chat qwen/qwen3-coder anthropic/claude-haiku-4.5 --versuche 2
+
+# (Modell-IDs sind Beispiele; aktuelle IDs und Preise: openrouter.ai/models)
+mgt modelle                       # Erfolgsquote, ø Versuche, ø Kosten je Aufgabenart und Modell + Empfehlung
+mgt delegiere … --auto-reihenfolge   # Modelle nach bisheriger Statistik sortieren
+```
+* **Prüfungen:** SVG (gültiges XML, `<svg>` mit `viewBox`, sichtbare Elemente, kein `<script>`/Event-Attribut/externer
+  Link, optional Brand-Farben und `--max-kb`), JSON (+ JSON-Schema: type, required, properties, items, enum, min/max,
+  pattern …), Python (Syntax), JavaScript (`node --check`; TS/JSX grob über Klammern), HTML (Tags geschlossen), Text
+  (nicht leer). Mit `--befehl` zusätzlich jeder Test- oder Build-Befehl (Exit 0 = bestanden), z. B. `pytest`, `mgt brand`.
+* **Delegieren:** OpenAI-kompatible Chat-API, Standard OpenRouter (`OPENROUTER_API_KEY`). Andere Anbieter oder lokale
+  Modelle über `--api-url` bzw. `MGT_API_URL` (z. B. Ollama `http://localhost:11434/v1`, Key dann beliebig über
+  `MGT_API_KEY`). Modelle aus `--modelle` oder `MGT_MODELLE=a,b,c` in `.env`. Die Antwort wird aus dem Codeblock
+  geholt, geprüft und bei Fehlern mit der genauen Fehlerliste zurückgegeben (`--versuche` Runden pro Modell). Besteht
+  kein Modell, endet der Befehl mit `ESKALATION` und Exit 1; der letzte Versuch liegt als `<datei>.fehlversuch` daneben.
+* **Log:** jede Prüfung mit `--modell` und jeder Delegier-Versuch landet in `~/.mgt/modell_log.jsonl` (projektübergreifend,
+  änderbar über `--log` bzw. `MGT_MODELL_LOG`): Aufgabenart, Modell, Erfolg, Fehler, Tokens, Kosten (falls die API sie liefert).
+  `mgt modelle` empfiehlt pro Aufgabenart das günstigste Modell mit mindestens 80 % Erfolg bei mindestens 3 Aufgaben.
+
 ---
 
 ## Entwicklung & Tests
 
 ```bash
 pip install -e ".[dev]"
-pytest              # 83 Tests; Video/Audio-Tests brauchen FFmpeg, ElevenLabs wird gemockt (kein Key nötig)
+pytest              # 100 Tests; Video/Audio-Tests brauchen FFmpeg, ElevenLabs und OpenRouter werden gemockt (kein Key nötig)
 ```
 Getestet mit Python 3.13, FFmpeg 6.1, rembg 2.0.87, Pillow 12, NumPy 2.5 (Linux). Pfade und Befehle sind
 plattformunabhängig (Windows, macOS, Linux).

@@ -4,12 +4,12 @@ from __future__ import annotations
 import argparse
 import sys
 
-from . import (__version__, brand, checkpoint, cutout, finish, language, licenses, multiformat, pauses,
+from . import (__version__, brand, checkpoint, cutout, delegate, finish, language, licenses, multiformat, pauses,
                pronounce, setup_project, sfx, storyboard, timetable)
 from .common import ToolError
 
 MODULES = [setup_project, pauses, timetable, sfx, cutout, licenses, storyboard, finish, checkpoint,
-           pronounce, brand, multiformat, language]
+           pronounce, brand, multiformat, language, delegate]
 
 
 def build_parser() -> argparse.ArgumentParser:

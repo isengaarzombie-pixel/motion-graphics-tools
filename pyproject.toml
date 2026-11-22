@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "motion-graphics-tools"
-version = "1.0.0"
-description = "13 Hilfstools (CLI 'mgt') für die Audio-First-Produktion von Motion-Graphics-Videos per Vibe Coding"
+version = "1.1.0"
+description = "14 Hilfstools (CLI 'mgt') für die Audio-First-Produktion von Motion-Graphics-Videos per Vibe Coding"
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
