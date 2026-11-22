@@ -158,6 +158,9 @@ def test_delegate_api_error_skips_model(tmp_path, monkeypatch):
     res = dg.delegate("Kreis", "svg", tmp_path / "x.svg", ["a", "b"], "K", log_path=tmp_path / "l", session=api)
     assert res["ok"] and res["modell"] == "b"
     assert len([c for c in api.calls if c["json"]["model"] == "a"]) == 4  # 1 + 3 Wiederholungen
+    assert res["versuche"] == 1
+    stats = dg.statistics(dg.read_log(tmp_path / "l"))
+    assert "a" not in stats["svg"]  # API-Fehler (z. B. 429 bei Gratis-Modellen) zählen nicht als Misserfolg
 
 
 def test_delegate_all_fail(tmp_path):

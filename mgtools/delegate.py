@@ -318,6 +318,8 @@ def statistics(entries: list[dict]) -> dict:
     Gezählt wird pro Aufgabe (Einträge mit gleicher 'lauf'-ID), nicht pro Versuch."""
     tasks: dict[tuple, dict] = {}
     for e in entries:
+        if e.get("api_fehler"):  # Rate-Limit/Netz/Provider sagt nichts über die Qualität des Modells
+            continue
         key = (e.get("aufgabenart", e.get("art", "?")), e.get("modell", "?"), e.get("lauf") or id(e))
         t = tasks.setdefault(key, {"ok": False, "versuche": 0, "kosten": 0.0})
         t["versuche"] += 1
@@ -433,9 +435,11 @@ def delegate(task: str, art: str, out: Path, models: list[str], api_key: str, at
             try:
                 resp = chat(model, messages, api_key, base_url, session=session)
             except ToolError as exc:
-                history.append({"modell": model, "versuch": attempt, "ok": False, "fehler": [str(exc)]})
+                history.append({"modell": model, "versuch": attempt, "ok": False, "fehler": [str(exc)],
+                                "api_fehler": True})
                 log_result({"lauf": f"{run_id}-{model}", "aufgabenart": task_kind, "art": art, "modell": model,
-                            "versuch": attempt, "ok": False, "fehler": [str(exc)][:3]}, log_path)
+                            "versuch": attempt, "ok": False, "api_fehler": True, "fehler": [str(exc)][:3]},
+                           log_path)
                 break  # API-Fehler: direkt zum nächsten Modell
             result = extract_result(resp["text"], art)
             out.parent.mkdir(parents=True, exist_ok=True)
@@ -448,7 +452,8 @@ def delegate(task: str, art: str, out: Path, models: list[str], api_key: str, at
             log_result(entry, log_path)
             history.append(entry)
             if check["ok"]:
-                return {"ok": True, "modell": model, "versuche": len(history), "datei": str(out),
+                return {"ok": True, "modell": model, "versuche": sum(not h.get("api_fehler") for h in history),
+                    "datei": str(out),
                         "verlauf": history, "hinweise": check["hinweise"]}
             messages += [{"role": "assistant", "content": resp["text"]},
                          {"role": "user", "content": "Die automatische Prüfung ist fehlgeschlagen:\n- "
@@ -526,7 +531,12 @@ def delegiere_main(args) -> int:
     res = delegate(task, art, out, models, key, args.versuche, base, schema, _load_brand(args.brand),
                    args.max_kb, args.befehl, kind, log_path)
     for h in res["verlauf"]:
-        status = "ok" if h["ok"] else "fehlgeschlagen: " + "; ".join(h.get("fehler", []))[:160]
+        if h["ok"]:
+            status = "ok"
+        elif h.get("api_fehler"):
+            status = "nicht erreichbar (zählt nicht in die Statistik): " + "; ".join(h.get("fehler", []))[:120]
+        else:
+            status = "Prüfung fehlgeschlagen: " + "; ".join(h.get("fehler", []))[:160]
         print(f"  {h['modell']} Versuch {h['versuch']}: {status}")
     if res["ok"]:
         print(f"ERGEBNIS: {res['datei']} (von {res['modell']}, {res['versuche']} Versuch(e))")
